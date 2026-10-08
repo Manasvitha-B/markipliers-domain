@@ -15,7 +15,7 @@ export const videos=[
  {id:'iOztnsBPrAA',title:"Five Nights at Freddy’s — Part 1",category:'Horror',image:fnaf.url,duration:'17:44',caption:'The classic that started it all.'},
  {id:'BB_4BnQe-qc',title:"Five Nights at Freddy’s 3 — Part 1",category:'Horror',image:fnaf3.url,duration:'22:41',caption:'Another night. Another unforgettable adventure.'},
  {id:'xAOv_zvXBQk',title:'In Space with Markiplier: Part 2',category:'Series',image:space2.url,duration:'27:15',caption:'The adventure is far from over.'},
- {id:'Kah-vLR82kk',title:'FRUIT OF DOOM | Prop Hunt #1',category:'Comedy',image:prop.url,duration:'16:20',caption:'Hide. Seek. Become a suspicious piece of fruit.'},
+ {id:'Kah-vLR82kk',title:'Prop Hunt #1',category:'Comedy',image:prop.url,duration:'16:20',caption:'Hide. Seek. Become a very sneaky piece of fruit.'},
  {id:'aEgf69r4E8E',title:'UNFAIR MARIO | Part 1',category:'Comedy',image:wheels.url,duration:'13:26',caption:'The most unfair platformer ever. Pure comedy gold.'},
 ];
 export type Video=typeof videos[number];
