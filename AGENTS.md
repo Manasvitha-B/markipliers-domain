@@ -12,3 +12,4 @@
 - Keep the three fan-site pages as TanStack leaf routes using shared site-shell and video-card components, so navigation and media presentation remain consistent.
 - Keep curated video records in a browser-safe data module and form validation in a shared Zod schema; the community form remains demo-only until a persistence service is requested.
 - Label AI-edited creator portraits as fan art in accessible descriptions and keep real video thumbnails sourced from their linked videos.
+- Render every outbound link with the shared ExternalLink component (real anchor, target="_blank", explicit new-tab request) so external pages such as YouTube are never loaded inside this site.
