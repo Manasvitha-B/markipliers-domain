@@ -4,8 +4,203 @@ import { ArrowUpRight, ArrowRight, Youtube, Instagram, Headphones, Check, Heart 
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from '@/components/external-link';
 import { CommunityMessages } from '@/components/community-messages';
-import { submissionSchema,type Submission } from '@/lib/submission';
-export const Route=createFileRoute('/community')({head:()=>({meta:[{title:'Join the Distraction — Markiplier Fan Club'},{name:'description',content:'Find your people in the Markiplier fan community. Share your favorite video, leave a fan message and connect with the conversation.'},{property:'og:title',content:'Join the Distraction — Markiplier Fan Club'},{property:'og:description',content:'For the late-night watchers, loud laughers and everyone along for the ride.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary_large_image'}]}),component:Community});
-function Community(){const[errors,setErrors]=useState<Partial<Record<keyof Submission,string>>>({});const[success,setSuccess]=useState(false);function submit(event:React.FormEvent<HTMLFormElement>){event.preventDefault();const data=Object.fromEntries(new FormData(event.currentTarget));const result=submissionSchema.safeParse(data);if(!result.success){const next:Partial<Record<keyof Submission,string>>={};result.error.issues.forEach(issue=>{const key=issue.path[0] as keyof Submission;next[key]=issue.message;});setErrors(next);return;}setErrors({});setSuccess(true);}
-return <><section className="page-intro"><div className="site-width reveal"><p className="eyebrow text-muted-foreground">YOU’RE IN GOOD (AND SLIGHTLY CHAOTIC) COMPANY</p><h1 className="page-title">JOIN THE<br className="sm:hidden"/> <span className="text-primary">DISTRACTION</span></h1><p className="max-w-xl text-sm leading-7 text-muted-foreground">For the late-night watchers. The loud laughers. The “one more video” people.<br className="hidden sm:block"/> This is your corner of the internet. Make yourself at home.</p></div></section><section className="site-width grid gap-12 pb-20 pt-5 md:grid-cols-[1.3fr_1fr]"><div>{success?<div role="status" className="py-12"><span className="mb-6 grid size-14 place-items-center rounded-full bg-accent text-primary"><Check size={28}/></span><h2 className="section-title">YOU’RE ONE OF US.</h2><p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">Thanks for sharing a little of your world! This fan-site demo doesn’t save or send your message, but the good vibes are very real.</p><Button className="mt-7" variant="quiet" onClick={()=>setSuccess(false)}>WRITE ANOTHER MESSAGE <ArrowRight/></Button></div>:<><h2 className="mb-2 text-3xl font-semibold">LEAVE YOUR MARK.</h2><p className="mb-7 text-xs leading-6 text-muted-foreground">A favorite moment, a wild theory, or just a hello. We’re here for it.</p><form noValidate onSubmit={submit} className="space-y-5"><div className="grid gap-5 sm:grid-cols-2">{field('name','Name','What should we call you?',100)}{field('email','Email','you@example.com',255,'email')}</div>{field('favorite','Favorite Markiplier video','The one you always come back to…',200)}<div><label className="form-label" htmlFor="message">Your message</label><textarea className="form-input min-h-36 resize-y" id="message" name="message" maxLength={1000} placeholder="Go on. Let your inner fan out." aria-invalid={!!errors.message} aria-describedby={errors.message?'message-error':undefined}/>{errors.message&&<p className="form-error" id="message-error">{errors.message}</p>}</div><div className="flex flex-wrap items-center gap-5"><Button variant="cinematic" type="submit">SEND YOUR MESSAGE <ArrowUpRight/></Button><span className="text-[10px] text-muted-foreground">FAN-SITE DEMO · NOT SAVED OR SENT</span></div></form></>}</div><aside className="community-aside"><p className="eyebrow mb-5 text-muted-foreground">KEEP THE CONVERSATION GOING</p><h2 className="text-3xl font-semibold">FIND YOUR PEOPLE.</h2><p className="mt-3 text-sm leading-7 text-muted-foreground">The fun doesn’t stop when the video ends.</p><ExternalLink className="social-row" href="https://www.youtube.com/@markiplier"><Youtube className="text-primary" size={24}/><div className="flex-1"><p className="font-semibold text-sm">YouTube</p><p className="mt-1 text-xs text-muted-foreground">Where the adventure begins</p></div><ArrowUpRight size={18}/></ExternalLink><ExternalLink className="social-row" href="https://www.instagram.com/markiplier/"><Instagram className="text-primary" size={24}/><div className="flex-1"><p className="font-semibold text-sm">Instagram</p><p className="mt-1 text-xs text-muted-foreground">A little more behind the scenes</p></div><ArrowUpRight size={18}/></ExternalLink><ExternalLink className="social-row" href="https://www.youtube.com/@distractible"><Headphones className="text-primary" size={24}/><div className="flex-1"><p className="font-semibold text-sm">Distractible</p><p className="mt-1 text-xs text-muted-foreground">Mark, Bob & Wade. Enough said.</p></div><ArrowUpRight size={18}/></ExternalLink><div className="mt-10"><Heart size={20} className="mb-4 text-primary"/><h3 className="text-xl font-semibold">A LITTLE KINDNESS GOES A LONG WAY.</h3><p className="mt-3 text-xs leading-6 text-muted-foreground">Be kind. Respect each other. Celebrate the weird.<br/>That’s how we keep this community worth coming back to.</p></div></aside></section><CommunityMessages/></>;
-function field(name:keyof Submission,label:string,placeholder:string,maxLength:number,type='text'){return <div><label className="form-label" htmlFor={name}>{label}</label><input className="form-input" id={name} name={name} type={type} maxLength={maxLength} placeholder={placeholder} autoComplete={name==='name'?'name':name==='email'?'email':'off'} aria-invalid={!!errors[name]} aria-describedby={errors[name]?`${name}-error`:undefined}/>{errors[name]&&<p className="form-error" id={`${name}-error`}>{errors[name]}</p>}</div>;}}
+import { submissionSchema, type Submission } from '@/lib/submission';
+import { supabase } from '@/lib/supabase';
+
+export const Route = createFileRoute('/community')({
+  head: () => ({
+    meta: [
+      { title: 'Join the Distraction — Markiplier Fan Club' },
+      { name: 'description', content: 'Find your people in the Markiplier fan community. Share your favorite video, leave a fan message and connect with the conversation.' },
+      { property: 'og:title', content: 'Join the Distraction — Markiplier Fan Club' },
+      { property: 'og:description', content: 'For the late-night watchers, loud laughers and everyone along for the ride.' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+    ],
+  }),
+  component: Community,
+});
+
+function Community() {
+  const [errors, setErrors] = useState<Partial<Record<keyof Submission, string>>>({});
+  const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [messagesVersion, setMessagesVersion] = useState(0);
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(form));
+    const result = submissionSchema.safeParse(data);
+
+    if (!result.success) {
+      const next: Partial<Record<keyof Submission, string>> = {};
+      result.error.issues.forEach(issue => {
+        const key = issue.path[0] as keyof Submission;
+        next[key] = issue.message;
+      });
+      setErrors(next);
+      return;
+    }
+
+    setErrors({});
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('submissions')
+        .insert({
+          name: result.data.name,
+          email: result.data.email,
+          favorite_video: result.data.favorite,
+          message: result.data.message,
+        });
+
+      if (error) {
+        console.error('Unable to save community message:', error);
+        const message = error.code === '42P01' || error.code === 'PGRST205'
+          ? 'The community table is missing. Apply supabase/migrations/20261010000000_create_submissions.sql in your Supabase SQL Editor, then try again.'
+          : error.code === '42501'
+            ? 'Supabase is blocking community submissions. Apply or re-run supabase/migrations/20261010000000_create_submissions.sql in your Supabase SQL Editor, then try again.'
+            : 'Your message could not be saved. Please try again.';
+        setErrors({ message });
+        return;
+      }
+
+      form.reset();
+      setMessagesVersion(version => version + 1);
+      setSuccess(true);
+    } catch (error) {
+      console.error('Unable to connect to save community message:', error);
+      setErrors({ message: 'Could not connect to save your message. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <>
+      <section className="page-intro">
+        <div className="site-width reveal">
+          <p className="eyebrow text-muted-foreground">YOU’RE IN GOOD (AND SLIGHTLY CHAOTIC) COMPANY</p>
+          <h1 className="page-title">JOIN THE<br className="sm:hidden" /> <span className="text-primary">DISTRACTION</span></h1>
+          <p className="max-w-xl text-sm leading-7 text-muted-foreground">
+            For the late-night watchers. The loud laughers. The “one more video” people.
+            <br className="hidden sm:block" /> This is your corner of the internet. Make yourself at home.
+          </p>
+        </div>
+      </section>
+
+      <section className="site-width grid gap-12 pb-20 pt-5 md:grid-cols-[1.3fr_1fr]">
+        <div>
+          {success ? (
+            <div role="status" className="py-12">
+              <span className="mb-6 grid size-14 place-items-center rounded-full bg-accent text-primary">
+                <Check size={28} />
+              </span>
+              <h2 className="section-title">YOU’RE ONE OF US.</h2>
+              <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">
+                Thanks for sharing a little of your world! Your message has been added to the community.
+              </p>
+              <Button className="mt-7" variant="quiet" onClick={() => setSuccess(false)}>
+                WRITE ANOTHER MESSAGE <ArrowRight />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <h2 className="mb-2 text-3xl font-semibold">LEAVE YOUR MARK.</h2>
+              <p className="mb-7 text-xs leading-6 text-muted-foreground">
+                A favorite moment, a wild theory, or just a hello. We’re here for it.
+              </p>
+              <form noValidate onSubmit={submit} className="space-y-5" aria-busy={isSubmitting}>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {field('name', 'Name', 'What should we call you?', 100)}
+                  {field('email', 'Email', 'you@example.com', 255, 'email')}
+                </div>
+                {field('favorite', 'Favorite Markiplier video', 'The one you always come back to…', 200)}
+                <div>
+                  <label className="form-label" htmlFor="message">Your message</label>
+                  <textarea
+                    className="form-input min-h-36 resize-y"
+                    id="message"
+                    name="message"
+                    maxLength={1000}
+                    placeholder="Go on. Let your inner fan out."
+                    aria-invalid={!!errors.message}
+                    aria-describedby={errors.message ? 'message-error' : undefined}
+                  />
+                  {errors.message && <p className="form-error" id="message-error" role="alert">{errors.message}</p>}
+                </div>
+                <div className="flex flex-wrap items-center gap-5">
+                  <Button variant="cinematic" type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'SENDING…' : 'SEND YOUR MESSAGE'} <ArrowUpRight />
+                  </Button>
+                  <span className="text-[10px] text-muted-foreground">YOUR MESSAGE WILL BE SHARED WITH THE COMMUNITY</span>
+                </div>
+              </form>
+            </>
+          )}
+        </div>
+
+        <aside className="community-aside">
+          <p className="eyebrow mb-5 text-muted-foreground">KEEP THE CONVERSATION GOING</p>
+          <h2 className="text-3xl font-semibold">FIND YOUR PEOPLE.</h2>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">The fun doesn’t stop when the video ends.</p>
+          <ExternalLink className="social-row" href="https://www.youtube.com/@markiplier">
+            <Youtube className="text-primary" size={24} />
+            <div className="flex-1">
+              <p className="font-semibold text-sm">YouTube</p>
+              <p className="mt-1 text-xs text-muted-foreground">Where the adventure begins</p>
+            </div>
+            <ArrowUpRight size={18} />
+          </ExternalLink>
+          <ExternalLink className="social-row" href="https://www.instagram.com/markiplier/">
+            <Instagram className="text-primary" size={24} />
+            <div className="flex-1">
+              <p className="font-semibold text-sm">Instagram</p>
+              <p className="mt-1 text-xs text-muted-foreground">A little more behind the scenes</p>
+            </div>
+            <ArrowUpRight size={18} />
+          </ExternalLink>
+          <ExternalLink className="social-row" href="https://www.youtube.com/@distractible">
+            <Headphones className="text-primary" size={24} />
+            <div className="flex-1">
+              <p className="font-semibold text-sm">Distractible</p>
+              <p className="mt-1 text-xs text-muted-foreground">Mark, Bob & Wade. Enough said.</p>
+            </div>
+            <ArrowUpRight size={18} />
+          </ExternalLink>
+          <div className="mt-10">
+            <Heart size={20} className="mb-4 text-primary" />
+            <h3 className="text-xl font-semibold">A LITTLE KINDNESS GOES A LONG WAY.</h3>
+            <p className="mt-3 text-xs leading-6 text-muted-foreground">
+              Be kind. Respect each other. Celebrate the weird.
+              <br />That’s how we keep this community worth coming back to.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <CommunityMessages key={messagesVersion} />
+    </>
+  );
+
+  function field(name: keyof Submission, label: string, placeholder: string, maxLength: number, type = 'text') {
+    return (
+      <div>
+        <label className="form-label" htmlFor={name}>{label}</label>
+        <input
+          className="form-input"
+          id={name}
+          name={name}
+          type={type}
+          maxLength={maxLength}
+          placeholder={placeholder}
+          autoComplete={name === 'name' ? 'name' : name === 'email' ? 'email' : 'off'}
+          aria-invalid={!!errors[name]}
+          aria-describedby={errors[name] ? `${name}-error` : undefined}
+        />
+        {errors[name] && <p className="form-error" id={`${name}-error`}>{errors[name]}</p>}
+      </div>
+    );
+  }
+}

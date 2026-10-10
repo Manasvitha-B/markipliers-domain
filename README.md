@@ -138,3 +138,7 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Community message backend
+
+The Community form stores submissions in Supabase and lists saved messages publicly. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the project root `.env` file. Apply `supabase/migrations/20261010000000_create_submissions.sql` to the connected Supabase project (for example, in the Supabase SQL Editor) before accepting submissions. The migration enables row-level security, permits anonymous submissions and reads, and does not grant public access to submitter email addresses.
