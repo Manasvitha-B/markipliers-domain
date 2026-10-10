@@ -20,6 +20,7 @@ describe('Video links',()=>{
     for(const video of videos){
       expect(video.id).toMatch(/^[\w-]{11}$/);
       expect(videoUrl(video.id)).toBe(`https://www.youtube.com/watch?v=${video.id}`);
+      expect(video.image).toBe(`https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`);
     }
   });
   it('keeps the videos whose links were verified and drops the broken ones',()=>{
